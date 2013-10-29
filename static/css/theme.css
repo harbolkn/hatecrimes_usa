@@ -1,0 +1,25 @@
+body {
+    font-family: "Helvetica Neue", Helvetica, sans-serif;    
+	display: block;
+}
+
+.land, .state-boundary{
+    stroke: black;
+    stroke-width: 1px;    
+	stroke-opacity: 1;
+    fill: darkred;
+}
+
+h2 {
+	text-rendering: optimizeLegibility;	
+	font-size: 40px;
+	font-weight: 300;
+	letter-spacing: -2px;
+	display: block;
+	text-align: center;
+	margin: .3em 0 .1em 0;
+}
+
+#slider{
+	margin: 10px 100px 30px 100px;
+}
