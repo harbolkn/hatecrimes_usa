@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Hate Crimes</title>
+	
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>
+	<script src="http://d3js.org/queue.v1.min.js"></script>
+	
+	<link rel="stylesheet" type="text/css" href="static/css/theme.css"></link>
+	<link rel="stylesheet" href="static/css/d3.slider.css"></link>
+
+	<script type="text/javascript" src="static/script/states.js"></script>
+	<script type="text/javascript" src="static/script/d3.slider.js"></script>
+</head>
+<body>
+	<h2>US Hate Crimes: 2005 - 2011</h2>
+	<p></p>
+
+	<div id="map"></div>
+	<p></p>
+	<div id="slider"></div>
+
+<script>
+	var width = 850,
+		height = 400;
+
+	var YEARS = [
+			"2011",
+			"2010",
+			"2008",
+			"2007",	
+			"2006",
+			"2005",
+		];
+	var year = YEARS[0];
+
+	var rateById = d3.map();
+
+	var path = d3.geo.path();
+
+	var svg = d3.select("#map").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+	var g = svg.append("g");
+
+	// Map 
+	var projection = d3.geo.albersUsa()
+		.scale(width)
+		.translate([width/2, height/2]);
+
+	var path = d3.geo.path()
+		.projection(projection);
+
+	// Queue up data for the map
+	queue()
+		.defer(d3.json, "static/map/us_states.json")
+		.defer(d3.json, "static/data/dist.json")
+		.await(ready);
+
+
+	var axis = d3.svg.axis().ticks(7);
+	d3.select("#slider")
+	.call(
+		d3.slider()
+		.axis(axis)
+		.min("2005")
+		.max("2011")
+		.value(year)
+		.on("slide", function(env, value){
+			year = value;
+			draw_dist();
+		})
+	);
+
+	var scale = d3.scale.linear()
+	.range([0.1, 1]);
+
+	var data_dist;
+		
+	// Start plotting data
+	function ready(error, us, dist){
+		data_dist = dist;
+		scale.domain([dist.data["min"], dist.data["max"]]);
+
+		var state = g.append("g")
+		.attr("class", "land")
+		.selectAll("path")
+		.data(us.features)
+		.enter();
+
+		state.append("path")
+		.attr("class", "state")
+		.attr("id", function(d){
+			var state_names = states.states.map(function(d){ return d.name; });
+
+			if(states.states[state_names.indexOf(d.properties.NAME.toUpperCase())]){
+				var name = states.states[state_names.indexOf(d.properties.NAME.toUpperCase())].name;
+				name = name.replace(/ /g,"_");
+				return name;
+			}
+		})
+		.attr("d", path);
+
+		draw_dist();
+	}
+
+	function draw_dist(){
+		var data = data_dist.data[year];	
+
+		for(key in data){
+			d3.select("#"+key.toUpperCase().replace(/ /g,"_"))
+			.attr("fill-opacity", function(d){
+				return scale(data[key]);
+			});
+		}
+	}
+
+</script>
+</body>
+</html>
