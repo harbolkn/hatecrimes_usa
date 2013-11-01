@@ -15,16 +15,10 @@
 	<script type="text/javascript" src="static/script/d3.slider.js"></script>
 </head>
 <body>
-	<h2>US Hate Crimes: 2005 - 2011</h2>
-	<p></p>
-
-	<div id="map"></div>
-	<p></p>
-	<div id="slider"></div>
 
 <script>
-	var width = 850,
-		height = 400;
+	var width = 960,
+		height = 500;
 
 	var YEARS = [
 			"2011",
@@ -38,13 +32,13 @@
 
 	var rateById = d3.map();
 
-	var path = d3.geo.path();
+	var quantize = d3.scale.quantize()
+		.domain([0, .15])
+		.range(d3.range(9).map(function(i) { return "q"+i+"-9"; }));
 
-	var svg = d3.select("#map").append("svg")
+	var svg = d3.select("body").append("svg")
 		.attr("width", width)
 		.attr("height", height);
-
-	var g = svg.append("g");
 
 	// Map 
 	var projection = d3.geo.albersUsa()
@@ -85,7 +79,7 @@
 		data_dist = dist;
 		scale.domain([dist.data["min"], dist.data["max"]]);
 
-		var state = g.append("g")
+		var state = svg.append("g")
 		.attr("class", "land")
 		.selectAll("path")
 		.data(us.features)
