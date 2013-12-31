@@ -6,6 +6,7 @@ from math import log10, floor
 TOTALS = range(3,8)
 
 YEARS = [
+            '2012',
             '2011',
             '2010',
             '2008',
@@ -41,16 +42,15 @@ def state_totals(year):
             if row[0] and row[4]:
                 for ind in TOTALS:
                     try:
-                        states[row[0].lower()] += int(row[ind].strip("'"))
+                        states[row[0].split('Total')[0].rstrip().lower()] += int(row[ind].strip("'"))
                     except:
-                        states[row[0].lower()] += 0
+                        states[row[0].split('Total')[0].rstrip().lower()] += 0
 
 
     return states
 
 
 def state_density(year):
-
     states = state_totals(year)
     populations = state_populations(year)
 
