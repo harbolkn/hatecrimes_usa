@@ -32,6 +32,7 @@
 			"2006",
 			"2005",
 		];
+    var MAX = "2012", MIN = "2005";
 	var year = YEARS[0];
 
 	var rateById = d3.map();
@@ -64,8 +65,8 @@
 	.call(
 		d3.slider()
 		.axis(axis)
-		.min("2005")
-		.max("2011")
+		.min(MIN)
+		.max(MAX)
 		.value(year)
 		.on("slide", function(env, value){
 			year = value;
@@ -73,7 +74,7 @@
 		})
 	);
 
-	var scale = d3.scale.linear()
+	var scale = d3.scale.sqrt()
 	.range([0.1, 1]);
 
 	var data_dist;
@@ -106,6 +107,11 @@
 	}
 
 	function draw_dist(){
+        d3.selectAll(".state")
+        .each(function(d, i){
+            d3.select(this).attr("fill-opacity", 0.01);
+        });
+
 		var data = data_dist.data[year];	
 
 		for(key in data){
