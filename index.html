@@ -7,121 +7,122 @@
 	<script src="http://d3js.org/d3.v3.min.js"></script>
 	<script src="http://d3js.org/topojson.v1.min.js"></script>
 	<script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.2.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
 	
 	<link rel="stylesheet" type="text/css" href="static/css/theme.css"></link>
 	<link rel="stylesheet" href="static/css/d3.slider.css"></link>
 
-	<script type="text/javascript" src="static/script/states.js"></script>
 	<script type="text/javascript" src="static/script/d3.slider.js"></script>
+
+    <script>
+        var YEARS = [
+        "2012",
+        "2011",
+        "2010",
+        "2008",
+        "2007",	
+        "2006",
+        "2005",
+        ];
+
+        var MAX = "2012", MIN = "2005";
+        var year = YEARS[0];
+    </script>
 </head>
 <body>
-	<div id="map"></div>
+    <div id="map"></div>
 	<p></p>
 	<div id="slider"></div>
 
-<script>
-	var width = 960,
-		height = 500;
+    <script>
+        var width = 960,
+        height = 500;
 
-	var YEARS = [
-            "2012",
-			"2011",
-			"2010",
-			"2008",
-			"2007",	
-			"2006",
-			"2005",
-		];
-    var MAX = "2012", MIN = "2005";
-	var year = YEARS[0];
+        var rateById = d3.map();
 
-	var rateById = d3.map();
+        var quantize = d3.scale.quantize()
+        .domain([0, .15])
+        .range(d3.range(9).map(function(i) { return "q"+i+"-9"; }));
 
-	var quantize = d3.scale.quantize()
-		.domain([0, .15])
-		.range(d3.range(9).map(function(i) { return "q"+i+"-9"; }));
+        var svg = d3.select("#map").append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
-	var svg = d3.select("#map").append("svg")
-		.attr("width", width)
-		.attr("height", height);
+        // Map 
+        var projection = d3.geo.albersUsa()
+        .scale(width)
+        .translate([width/2, height/2]);
 
-	// Map 
-	var projection = d3.geo.albersUsa()
-		.scale(width)
-		.translate([width/2, height/2]);
+        var path = d3.geo.path()
+        .projection(projection);
 
-	var path = d3.geo.path()
-		.projection(projection);
+        // Queue up data for the map
+        queue()
+        .defer(d3.json, "static/map/us_states.json")
+        .defer(d3.json, "static/data/dist.json")
+        .await(draw);
 
-	// Queue up data for the map
-	queue()
-		.defer(d3.json, "static/map/us_states.json")
-		.defer(d3.json, "static/data/dist.json")
-		.await(ready);
+        var scale = d3.scale.sqrt()
+        .range([0.1, 1]);
+
+        var data_dist;
+
+        var axis = d3.svg.axis().ticks(7);
+        d3.select("#slider")
+        .call(
+            d3.slider()
+            .axis(true)
+            .min(MIN)
+            .max(MAX)
+            .value(year)
+            .on("slide", function(env, value){
+                year = value;
+                draw_dist();
+            })
+        );
 
 
-	var axis = d3.svg.axis().ticks(7);
-	d3.select("#slider")
-	.call(
-		d3.slider()
-		.axis(axis)
-		.min(MIN)
-		.max(MAX)
-		.value(year)
-		.on("slide", function(env, value){
-			year = value;
-			draw_dist();
-		})
-	);
+        // Start plotting data
+        function draw(error, us, dist){
+            data_dist = dist;
+            scale.domain([dist.data["min"], dist.data["max"]]);
 
-	var scale = d3.scale.sqrt()
-	.range([0.1, 1]);
+            var state = svg.append("g")
+            .attr("class", "land")
+            .selectAll("path")
+            .data(us.features)
+            .enter();
 
-	var data_dist;
-		
-	// Start plotting data
-	function ready(error, us, dist){
-		data_dist = dist;
-		scale.domain([dist.data["min"], dist.data["max"]]);
+            state.append("path")
+            .attr("class", "state")
+            .attr("id", function(d){
+                var name = d.properties.NAME.toUpperCase();
+                name = name.split(" ").join("_");
+                return name;
+            })
+            .attr("d", path);
 
-		var state = svg.append("g")
-		.attr("class", "land")
-		.selectAll("path")
-		.data(us.features)
-		.enter();
+            draw_dist();
+        }
 
-		state.append("path")
-		.attr("class", "state")
-		.attr("id", function(d){
-			var state_names = states.states.map(function(d){ return d.name; });
+        function draw_dist(){
+            d3.selectAll(".state")
+            .each(function(d, i){
+                d3.select(this).attr("fill-opacity", 0.01);
+            });
 
-			if(states.states[state_names.indexOf(d.properties.NAME.toUpperCase())]){
-				var name = states.states[state_names.indexOf(d.properties.NAME.toUpperCase())].name;
-				name = name.replace(/ /g,"_");
-				return name;
-			}
-		})
-		.attr("d", path);
+            var data = data_dist.data[year];	
 
-		draw_dist();
-	}
+            for(key in data){
+                d3.select("#"+key.toUpperCase().replace(/ /g,"_"))
+                .attr("fill-opacity", function(d){
+                    return scale(data[key]);
+                });
+            }
+        }
 
-	function draw_dist(){
-        d3.selectAll(".state")
-        .each(function(d, i){
-            d3.select(this).attr("fill-opacity", 0.01);
-        });
+    </script>
 
-		var data = data_dist.data[year];	
-
-		for(key in data){
-			d3.select("#"+key.toUpperCase().replace(/ /g,"_"))
-			.attr("fill-opacity", function(d){
-				return scale(data[key]);
-			});
-		}
-	}
-
-</script>
 </body>
 </html>
