@@ -7,18 +7,18 @@ TOTALS = range(3,8)
 
 YEARS = [
             '2012',
-            '2011',
-            '2010',
-            '2008',
-            '2007',
-            '2006',
-            '2005',
+##            '2011',
+##            '2010',
+##            '2008',
+##            '2007',
+##            '2006',
+##            '2005',
         ]
 
-def state_populations(year):
+def populations(year):
     temp_year = year[:3]
 
-    populations = defaultdict(int)
+    population = defaultdict(int)
     with open('static/data/census_'+temp_year+'0s.csv', 'r') as census_file:
         census = csv.reader(census_file, delimiter=',', quotechar='"')
 
@@ -27,42 +27,53 @@ def state_populations(year):
 
         for row in census:
             if row[0].startswith("."):
-                populations[row[0][1:].lower()] = row[key.index(year)]
+                population[row[0][1:].lower()] = int(row[key.index(year)].replace(',', ''))
 
-    return populations
+    return population
 
 
-def state_totals(year):
-    states = defaultdict(int)
+def crimes(year):
+    crimes = defaultdict(int)
 
     with open('static/data/fbi_'+year+'.csv', 'r') as crimefile:
-        crimes = csv.reader(crimefile, delimiter='\t', quotechar='"')
+        c_file = csv.reader(crimefile, delimiter='\t', quotechar='"')
 
-        for row in crimes:
-            if row[0] and row[4]:
-                for ind in TOTALS:
-                    try:
-                        states[row[0].split('Total')[0].rstrip().lower()] += int(row[ind].strip("'"))
-                    except:
-                        states[row[0].split('Total')[0].rstrip().lower()] += 0
+        for i, row in enumerate(c_file):
+            state_ind=0; total_ind=4
+            if i > 1:
+                row = row[0].strip("'").split(",")
+                crimes[row[state_ind].lower()] = int(row[total_ind])
 
+    return crimes
 
-    return states
+def coverages(year):
+    coverage = defaultdict(int)
 
+    with open('static/data/fbi_'+year+'.csv', 'r') as crimefile:
+        c_file = csv.reader(crimefile, delimiter='\t', quotechar='"')
+
+        for i, row in enumerate(c_file):
+            state_ind=0; cov_ind=2;
+
+            if i > 1:
+                row = row[0].strip("'").split(",")
+                coverage[row[state_ind].lower()] = int(row[cov_ind])
+
+    return coverage
 
 def state_density(year):
-    states = state_totals(year)
-    populations = state_populations(year)
+    crime = crimes(year)
+    coverage = coverages(year)
+    population = populations(year)
 
-    for s in populations:
-        if s in states:
-            states[s] = states[s] / float(populations[s].strip(',"').replace(",", ""))
-            states[s] = round(states[s],  2 - int(floor(log10(states[s]))) - 1)
+    for s in population:
+        if s in crime and s in coverage:
+            crime[s] = round((float(population[s])/ coverage[s])*crime[s]) / population[s]
+            crime[s] = round(crime[s],  2 - int(floor(log10(crime[s]))) - 1)
 
-    if "outlying areas" in states:
-        del states["outlying areas"]
+            print crime[s]
 
-    return states
+    return crime
 
 
 if __name__ == '__main__':
