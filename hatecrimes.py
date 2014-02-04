@@ -19,7 +19,7 @@ def state_populations(year):
     temp_year = year[:3]
 
     populations = defaultdict(int)
-    with open('static/census/'+temp_year+'0s.csv', 'r') as census_file:
+    with open('static/data/census_'+temp_year+'0s.csv', 'r') as census_file:
         census = csv.reader(census_file, delimiter=',', quotechar='"')
 
         # This needs to change
@@ -35,7 +35,7 @@ def state_populations(year):
 def state_totals(year):
     states = defaultdict(int)
 
-    with open('static/fbi/'+year+'.csv', 'r') as crimefile:
+    with open('static/data/fbi_'+year+'.csv', 'r') as crimefile:
         crimes = csv.reader(crimefile, delimiter='\t', quotechar='"')
 
         for row in crimes:
