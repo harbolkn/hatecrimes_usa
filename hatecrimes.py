@@ -7,12 +7,12 @@ TOTALS = range(3,8)
 
 YEARS = [
             '2012',
-##            '2011',
-##            '2010',
-##            '2008',
-##            '2007',
-##            '2006',
-##            '2005',
+            '2011',
+            '2010',
+            '2008',
+            '2007',
+            '2006',
+            '2005',
         ]
 
 def populations(year):
@@ -57,7 +57,11 @@ def coverages(year):
 
             if i > 1:
                 row = row[0].strip("'").split(",")
-                coverage[row[state_ind].lower()] = int(row[cov_ind])
+
+                try:
+                    coverage[row[state_ind].lower()] = int(row[cov_ind])
+                except:
+                    coverage[row[state_ind].lower()] = 0
 
     return coverage
 
@@ -68,10 +72,12 @@ def state_density(year):
 
     for s in population:
         if s in crime and s in coverage:
-            crime[s] = round((float(population[s])/ coverage[s])*crime[s]) / population[s]
-            crime[s] = round(crime[s],  2 - int(floor(log10(crime[s]))) - 1)
+            if coverage[s] != 0:
+                crime[s] = round((float(population[s])/ coverage[s])*crime[s]) / population[s]
+            else:
+                crime[s] = crime[s] / float(population[s])
 
-            print crime[s]
+##            crime[s] = round(crime[s],  2 - int(floor(log10(crime[s]))) - 1)
 
     return crime
 
