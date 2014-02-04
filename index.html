@@ -63,7 +63,7 @@
         .defer(d3.json, "static/data/dist.json")
         .await(draw);
 
-        var scale = d3.scale.sqrt()
+        var scale = d3.scale.linear()
         .range([0.1, 1]);
 
         var data_dist;
