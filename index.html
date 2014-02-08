@@ -27,7 +27,6 @@
         ];
 
         var MAX = "2012", MIN = "2005";
-        var year = YEARS[0];
     </script>
 </head>
 <body>
@@ -63,9 +62,6 @@
         .defer(d3.json, "static/data/dist.json")
         .await(draw);
 
-        var scale = d3.scale.linear()
-        .range([0.1, 1]);
-
         var data_dist;
 
         var axis = d3.svg.axis().ticks(7);
@@ -75,10 +71,9 @@
             .axis(true)
             .min(MIN)
             .max(MAX)
-            .value(year)
+            .value(MAX)
             .on("slide", function(env, value){
-                year = value;
-                draw_dist();
+                draw_dist(value);
             })
         );
 
@@ -86,7 +81,6 @@
         // Start plotting data
         function draw(error, us, dist){
             data_dist = dist;
-            scale.domain([dist.data["min"], dist.data["max"]]);
 
             var state = svg.append("g")
             .attr("class", "land")
@@ -103,21 +97,30 @@
             })
             .attr("d", path);
 
-            draw_dist();
+            draw_dist(MAX);
         }
 
-        function draw_dist(){
-            d3.selectAll(".state")
-            .each(function(d, i){
-                d3.select(this).attr("fill-opacity", 0.01);
-            });
+        function draw_dist(year){
+            var data = data_dist.data[year],
+                values = data.map(function(d){ return d.rate; });
 
-            var data = data_dist.data[year];	
+            var my_max = d3.max(values), my_min = d3.min(values),
+                mean = d3.mean(values), median = d3.median(values);
 
-            for(key in data){
-                d3.select("#"+key.toUpperCase().replace(/ /g,"_"))
-                .attr("fill-opacity", function(d){
-                    return scale(data[key]);
+            var diff = values.map(function(d){ return d - mean;}); 
+
+            var variance = d3.sum(diff.map(function(d){ return d*d; }))/diff.length,
+                sd = Math.sqrt(variance);
+
+            var dist = d3.scale.linear()
+            .domain([(my_min - mean)/sd, 0, (my_max - mean)/sd])
+            .range(["darkred", "white", "darkblue"]);
+
+            for(i in data){
+                d3.select("#"+data[i].name.toUpperCase().replace(/ /g,"_"))
+                .attr("fill", function(d){
+                    var d_sd = (data[i].rate - mean)/sd;
+                    return dist(d_sd);
                 });
             }
         }

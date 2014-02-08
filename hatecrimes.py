@@ -2,6 +2,7 @@ import csv
 from collections import defaultdict
 import json
 from math import log10, floor
+from states import states
 
 TOTALS = range(3,8)
 
@@ -44,6 +45,10 @@ def crimes(year):
                 row = row[0].strip("'").split(",")
                 crimes[row[state_ind].lower()] = int(row[total_ind])
 
+        for s in states:
+            if s.lower() not in  crimes:
+                crimes[s.lower()] = 0
+
     return crimes
 
 def coverages(year):
@@ -63,6 +68,10 @@ def coverages(year):
                 except:
                     coverage[row[state_ind].lower()] = 0
 
+        for s in states:
+            if s.lower() not in  coverage:
+                coverage[s.lower()] = 0
+
     return coverage
 
 def state_density(year):
@@ -70,16 +79,19 @@ def state_density(year):
     coverage = coverages(year)
     population = populations(year)
 
+    rate = {}
     for s in population:
         if s in crime and s in coverage:
             if coverage[s] != 0:
-                crime[s] = round((float(population[s])/ coverage[s])*crime[s]) / population[s]
+                rate[s] = round((float(population[s])/ coverage[s])*crime[s]) / population[s]
             else:
-                crime[s] = crime[s] / float(population[s])
+                rate[s] = crime[s] / float(population[s])
 
-##            crime[s] = round(crime[s],  2 - int(floor(log10(crime[s]))) - 1)
+    res = []
+    for s in states:
+        res.append({"name": s.lower(), "num": crime[s.lower()], "rate": rate[s.lower()]})
 
-    return crime
+    return res
 
 
 if __name__ == '__main__':
@@ -88,16 +100,16 @@ if __name__ == '__main__':
     minimum = 1
 
     for year in YEARS:
-        data["data"][year] = dict(state_density(year))
+        data["data"][year] = state_density(year)
 
-        temp_max = max(data["data"][year].iteritems(), key=lambda a: a[1])
-        temp_min = min(data["data"][year].iteritems(), key=lambda a: a[1])
+        temp_max = max([x["rate"] for x in data["data"][year]])
+        temp_min = min([x["rate"] for x in data["data"][year] if x["rate"]!=0])
 
         if(temp_max > maximum):
-            maximum = temp_max[1]
+            maximum = temp_max
 
-        if(temp_min > minimum):
-            minimum = temp_min[1]
+        if(temp_min < minimum):
+            minimum = temp_min
 
     data["data"]["min"] = minimum
     data["data"]["max"] = maximum
