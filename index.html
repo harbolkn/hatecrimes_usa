@@ -100,6 +100,7 @@
             draw_dist(MAX);
         }
 
+        // TODO: Bayesian Method
         function draw_dist(year){
             var data = data_dist.data[year],
                 values = data.map(function(d){ return d.rate; });
@@ -107,13 +108,14 @@
             var my_max = d3.max(values), my_min = d3.min(values),
                 mean = d3.mean(values), median = d3.median(values);
 
+
             var diff = values.map(function(d){ return d - mean;}); 
 
             var variance = d3.sum(diff.map(function(d){ return d*d; }))/diff.length,
                 sd = Math.sqrt(variance);
 
             var dist = d3.scale.linear()
-            .domain([-1*((my_max - mean)/sd), 0, (my_max - mean)/sd])
+            .domain([((my_min - mean)/sd), 0, (my_max - mean)/sd])
             .range(["darkred", "white", "darkblue"]);
 
             for(i in data){
