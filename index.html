@@ -113,7 +113,7 @@
                 sd = Math.sqrt(variance);
 
             var dist = d3.scale.linear()
-            .domain([(my_min - mean)/sd, 0, (my_max - mean)/sd])
+            .domain([-1*((my_max - mean)/sd), 0, (my_max - mean)/sd])
             .range(["darkred", "white", "darkblue"]);
 
             for(i in data){
